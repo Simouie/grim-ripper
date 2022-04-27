@@ -123,8 +123,8 @@ def build_command(r_path):
         # for sounds that are supposed to loop
 
         if sound_name == "loop":
-            a = f"tool sounds-single-layer {r_path} {sound_type}\n"
-            b = f"tool sound-looping {parent_path} {sound_type}\n"
+            a = f"tool sounds-single-layer \"{r_path}\" {sound_type}\n"
+            b = f"tool sound-looping \"{parent_path}\" {sound_type}\n"
             return a + b
 
     # for everything else
@@ -132,7 +132,7 @@ def build_command(r_path):
     if sound_type == "unknown": 
         print_warning(sound_name, r_path)
 
-    return f"tool sounds-single-layer {r_path} {sound_type}\n"
+    return f"tool sounds-single-layer \"{r_path}\" {sound_type}\n"
 
 
 def create_batch_file(full_path):
