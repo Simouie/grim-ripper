@@ -3,8 +3,15 @@ import sys
 import datetime as dt
 
 
-BATCH_01 = "sounds.bat"
-BATCH_02 = "sounds_unknown.bat"
+# create a time stamp based on current date and time
+# the time stamp should be written as YYYYMMDD_HHMMSS
+
+TIME_STAMP = dt.datetime.strftime(dt.datetime.now(), "%Y%m%d_%H%M%S")
+
+# files created by this program should have the time stamp in the name
+
+BATCH_01 = f"{TIME_STAMP}_sounds.bat"
+BATCH_02 = f"{TIME_STAMP}_sounds_unknown.bat"
 
 
 # if the name of the sound has one of these keywords
