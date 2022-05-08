@@ -1,81 +1,80 @@
 import os
 import sys
+import datetime as dt
 
 
 BATCH_01 = "sounds.bat"
 BATCH_02 = "sounds_unknown.bat"
 
-MY_TYPES = {
-    "impact": "projectile_impact",
-    "hit": "projectile_impact",
-    "bounce": "projectile_impact",
-    "bnc": "projectile_impact",
-    "ricc": "projectile_impact",
-    "expl": "projectile_detonation",
-    "flyby": "projectile_flyby",
-    "_by": "projectile_flyby",
-    "attached": "projectile_flyby",
-    "fire": "weapon_fire",
-    "firing": "weapon_fire",
-    "eject": "weapon_fire",
-    "tail": "weapon_fire",
-    "ready": "weapon_ready",
-    "reload": "weapon_reload",
-    "load": "weapon_reload",
-    "ammo": "weapon_reload",
-    "empty": "weapon_empty",
-    "dryfire": "weapon_empty",
-    "charge": "weapon_charge",
-    "charging": "weapon_charge",
-    "overheat": "weapon_overheat",
-    "heat": "weapon_overheat",
-    "oh": "weapon_overheat",
-    "vent": "weapon_overheat",
-    "idle": "weapon_idle",
-    "pose": "weapon_idle",
-    "posing": "weapon_idle",
-    "melee": "weapon_melee",
-    "lunge": "weapon_melee",
-    "drop": "object_impacts",
-    "lod_far": "weapon_fire_lod",
-    "zoom": "game_event",
-}
 
-MY_KEYS = sorted([ k for k in MY_TYPES.keys() ])
+# if the name of the sound has one of these keywords
+# its sound type probably should be the corresponding value
+# sometimes there are multiple keywords in the name
+# usually one of them has more importance than the others
+
+MY_TYPES = {
+    "impact": [ "projectile_impact", 0 ],
+    "hit": [ "projectile_impact", 0 ],
+    "bounce": [ "projectile_impact", 0 ],
+    "bnc": [ "projectile_impact", 0 ],
+    "ricc": [ "projectile_impact", 0 ],
+    "expl": [ "projectile_detonation", 2 ],
+    "flyby": [ "projectile_flyby", 0 ],
+    "_by": [ "projectile_flyby", 0 ],
+    "attached": [ "projectile_flyby", 0 ],
+    "fire": [ "weapon_fire", 1 ],
+    "firing": [ "weapon_fire", 1 ],
+    "eject": [ "weapon_fire", 0 ],
+    "tail": [ "weapon_fire", 0 ],
+    "ready": [ "weapon_ready", 1 ],
+    "reload": [ "weapon_reload", 1 ],
+    "load": [ "weapon_reload", 1 ],
+    "ammo": [ "weapon_reload", 0 ],
+    "empty": [ "weapon_empty", 0 ],
+    "dryfire": [ "weapon_empty", 2 ],
+    "charge": [ "weapon_charge", 0 ],
+    "charging": [ "weapon_charge", 0 ],
+    "overheat": [ "weapon_overheat", 0 ],
+    "heat": [ "weapon_overheat", 0 ],
+    "oh": [ "weapon_overheat", 0 ],
+    "vent": [ "weapon_overheat", 0 ],
+    "idle": [ "weapon_idle", 0 ],
+    "pose": [ "weapon_idle", 0 ],
+    "posing": [ "weapon_idle", 0 ],
+    "melee": [ "weapon_melee", 0 ],
+    "lunge": [ "weapon_melee", 0 ],
+    "drop": [ "object_impacts", 0 ],
+    "lod_far": [ "weapon_fire_lod", 1 ],
+    "zoom": [ "game_event", 0 ],
+}
 
 
 def guess_type(name):
 
     # try to determine the appropriate sound type based on the given name 
     # assuming that the name actually has meaningful keywords
+    # choose the sound type with the highest priority if there is more than one possible type
 
-    t = "unknown"
+    sound_type = "unknown"
+    possible_types = []
 
-    for k in MY_KEYS:
-        if k in name: 
-            t = MY_TYPES[k]
-            break
+    for k in MY_TYPES:
+        if k in name:
+            possible_types.append(MY_TYPES[k])
 
-    # there are various special cases where multiple keywords are present
-    # this is going to be ugly but they must handled somehow
+    if possible_types != []: 
+        best_type = possible_types[0]
+        for t in possible_types:
+            if t[1] > best_type[1]: best_type = t
+        sound_type = best_type[0]
 
     if "lod" in name:
-        if t == "projectile_detonation": 
+        if sound_type == "projectile_detonation": 
             return "projectile_detonation_lod"
-        if t == "weapon_fire": 
+        if sound_type == "weapon_fire": 
             return "weapon_fire_lod"
-
-    if "empty" in name:
-        if "reload" in name: 
-            return "weapon_reload"
-        return "weapon_empty"
-
-    if "charge" in name:
-        if "fire" in name:
-            return "weapon_fire"
-        return "weapon_charge"
     
-    return t
+    return sound_type
 
 
 def get_relative_path(path):
