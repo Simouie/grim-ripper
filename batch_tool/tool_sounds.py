@@ -10,8 +10,8 @@ TIME_STAMP = dt.datetime.strftime(dt.datetime.now(), "%Y%m%d_%H%M%S")
 
 # files created by this program should have the time stamp in the name
 
-BATCH_01 = f"{TIME_STAMP}_sounds.bat"
-BATCH_02 = f"{TIME_STAMP}_sounds_unknown.bat"
+BAT_01 = f"./{TIME_STAMP}_sounds.bat"
+BAT_02 = f"./{TIME_STAMP}_sounds_unknown.bat"
 
 
 # if the name of the sound has one of these keywords
@@ -25,6 +25,7 @@ MY_TYPES = {
     "bounce": [ "projectile_impact", 0 ],
     "bnc": [ "projectile_impact", 0 ],
     "ricc": [ "projectile_impact", 0 ],
+    "detonation": [ "projectile_detonation", 0 ],
     "expl": [ "projectile_detonation", 2 ],
     "flyby": [ "projectile_flyby", 0 ],
     "_by": [ "projectile_flyby", 0 ],
@@ -84,61 +85,62 @@ def guess_type(name):
     return sound_type
 
 
-def get_relative_path(path):
+def get_relative_path(absolute_path):
 
     # assuming the given path is an absolute path to a directory within the H3EK directory
     # trim the given path to get a relative path that Tool can use
 
-    path_parts = path.split("\\")
-    parts_count = len(path_parts)
+    parts = absolute_path.split("\\")
+    parts_count = len(parts)
 
     for i in range(parts_count):
-        if path_parts[i] == "H3EK":
-            return "\\".join(path_parts[i + 2:])
+        if parts[i] == "H3EK":
+            return "\\".join(parts[i + 2:])
 
 
-def write_command(c, primary_batch_file, secondary_batch_file):
+def write_command(command, primary_batch_file, secondary_batch_file):
 
-    if c.endswith("unknown\n"):
-        secondary_batch_file.write(c)
+    if command.endswith("unknown\n"):
+        secondary_batch_file.write(command)
         return
     
-    primary_batch_file.write(c)
+    primary_batch_file.write(command)
 
 
-def build_command(r_path):
+def build_command(relative_path):
 
     def print_warning(name, path):
         print(f"WARNING: I have no idea what type of sound '{name}' should be\n{path}")
-
-    sound_name = r_path.split("\\")[-1]
+    
+    sound_name = relative_path.split("\\")[-1]
     sound_type = guess_type(sound_name)
-
-    parent_path = ""
-
+    
     # for sounds that are part of loops
 
     if sound_name in [ "in", "loop", "out" ]:
 
-        parent_path = "\\".join(r_path.split("\\")[0:-2])
+        # the file name has no keywords needed to determine sound type
+        # try using the name of the parent directory of the parent directory
+
+        parent_path = "\\".join(relative_path.split("\\")[0:-2])
         sound_type = guess_type(parent_path.split("\\")[-1])
 
         if sound_type == "unknown": 
-            print_warning(sound_name, r_path)
+            print_warning(sound_name, relative_path)
 
         # for sounds that are supposed to loop
 
         if sound_name == "loop":
-            a = f"tool sounds-single-layer \"{r_path}\" {sound_type}\n"
+            a = f"tool sounds-single-layer \"{relative_path}\" {sound_type}\n"
             b = f"tool sound-looping \"{parent_path}\" {sound_type}\n"
             return a + b
 
     # for everything else
 
     if sound_type == "unknown": 
-        print_warning(sound_name, r_path)
+        print_warning(sound_name, relative_path)
 
-    return f"tool sounds-single-layer \"{r_path}\" {sound_type}\n"
+    return f"tool sounds-single-layer \"{relative_path}\" {sound_type}\n"
 
 
 def create_batch_file(full_path):
@@ -147,11 +149,11 @@ def create_batch_file(full_path):
     # for any directory that contains WAV files 
     # write a command for compiling sounds in that directory
 
-    with open(BATCH_01, "w") as a, open(BATCH_02, "w") as b:
-        for path, d, file_names in os.walk(full_path):
-            for file_name in file_names:
+    with open(BAT_01, "w") as a, open(BAT_02, "w") as b:
+        for p, d, f in os.walk(full_path):
+            for file_name in f:
                 if file_name.lower().endswith(".wav"):
-                    c = build_command(get_relative_path(path))
+                    c = build_command(get_relative_path(p))
                     write_command(c, a, b)
                     break
 
